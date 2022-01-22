@@ -5,7 +5,7 @@ Note: if you decide to do those changes to your air purifier, you take all the r
 
 ### What you need
 * ESP8266 WiFi controller (for example Wemos D1 mini)
-* 4 x PC817-B Sharp optocouplers 
+* 3 x PC817-B Sharp optocouplers
 * 4 x 270 ohms resistors
 * 1 x 10 uF electrolytic capacitor
 * some dupont jumper wiring cables
