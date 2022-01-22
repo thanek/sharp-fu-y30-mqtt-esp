@@ -1,5 +1,8 @@
 ## ESP8266 MQTT Sharp-fu-y30 air purifier controller
 
+### Disclaimer
+Note: if you decide to do those changes to your air purifier, you take all the responsibility for doing so with all it's consequences such as loosing warranty for your device or even destroing it! 
+
 ### What you need
 * ESP8266 WiFi controller (for example Wemos D1 mini)
 * 4 x PC817-B Sharp optocouplers 
@@ -8,11 +11,11 @@
 * some dupont jumper wiring cables
 * some soldering skills
 
-To integrate the ESP8266 with Sharp FU-Y30 air purifier you need to both of it's PCBs. One is the mainboard and it is ad the bottom of the device. 
+To integrate the ESP8266 with Sharp FU-Y30 air purifier you need to both of it's PCBs. One is the mainboard and it is at the bottom of the device. 
 
 ![Mainboard](./doc/sharp-fu-y30-mainboard-front.png)
 
-Second board (on the upper side of the device) contains only some buttons and LEDs, but we will need to solder some wires there as well. 
+Second board (on the upper side of the device) contains only some buttons and LEDs, but you will need to solder some wires there as well. 
 
 ![Control panel](./doc/sharp-fu-y30-control-panel-front.png)
 
@@ -30,5 +33,13 @@ Note the places you need to connect on the Sharp's PCBs:
 When you connect to the Q45, Q46 and Q47, you need to connect to base (B) pins of those transistors.
 
 ![Control panel](./doc/sharp-fu-y30-control-panel.png)
+
+Be sure to properly connect the optocouplers with switch buttons on the control panels (note the polarization).
+
+## Software
+You need to create the `config.h` file by copying the `config.example.h`. Enter your WiFi data there, also include the MQTT server addres. You can use some of public MQTT servers with no problem.
+
+After you deploy your code to the ESP8266, you will be able to perform OTA updates. Just change the ESP8266 IP address in the `platformio.ini` file.
+
 
 
