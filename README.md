@@ -39,12 +39,13 @@ Be sure to properly connect the optocouplers with switch buttons on the control 
 ## Software
 You need to create the `config.h` file by copying the `config.example.h`. Enter your WiFi data there, also include the MQTT server addres. You can use some of public MQTT servers with no problem.
 
-After you deploy your code to the ESP8266, you will be able to perform OTA updates. Just change the ESP8266 IP address in the `platformio.ini` file.
+After you deploy your code to the ESP8266, you will be able to perform OTA updates. Just uncomment the `espota` upload protocol and change the ESP8266 IP address in the `platformio.ini` file.
 
 ## Demo
 See the demo of how you can control you purifier using `mosquito` command line client:
 
 [![Demo](https://img.youtube.com/vi/q9jJ4eS9DLY/0.jpg)](https://www.youtube.com/watch?v=q9jJ4eS9DLY)
 
-
+## Home Assistant integrations
+This firmware is able to integrate with Home Assistant out of the box if you have enabled the MQTT extension.
 

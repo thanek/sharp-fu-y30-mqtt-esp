@@ -2,26 +2,28 @@
 #include "mqtt.h"
 
 char commandTopic[256];
-char statusTopic[256];
+char stateTopic[256];
+char presetStateTopic[256];
+char oscillationStateTopic[256];
+char configTopic[256];
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
-void createStatusTopic(const char *hostname)
+void generateTopicNames(const char *clientId)
 {
-  sprintf(statusTopic, "xis/%s/state", hostname);
-}
-
-void createCommandTopic(const char *hostname)
-{
-  sprintf(commandTopic, "xis/%s/command", hostname);
+  const char *topicPrefix = "homeassistant/fan/";
+  sprintf(stateTopic, "%s%s/state", topicPrefix, clientId);
+  sprintf(presetStateTopic, "%s%s/preset", topicPrefix, clientId);
+  sprintf(oscillationStateTopic, "%s%s/oscillation", topicPrefix, clientId);
+  sprintf(commandTopic, "%s%s/command", topicPrefix, clientId);
+  sprintf(configTopic, "%s%s/config", topicPrefix, clientId);
 }
 
 void mqttConnect(const char *host, int port, const char *user, const char *password, const char *clientId, MQTT_CALLBACK_SIGNATURE)
 {
-  createStatusTopic(clientId);
-  createCommandTopic(clientId);
-  
+  generateTopicNames(clientId);
+
   mqttClient.setServer(host, port);
   mqttClient.setCallback(callback);
   while (!mqttClient.connected())
@@ -40,9 +42,24 @@ void mqttConnect(const char *host, int port, const char *user, const char *passw
   }
 }
 
-void mqttPublish(const char *payload)
+void mqttPublishState(const char *payload)
 {
-  mqttClient.publish(statusTopic, payload);
+  mqttClient.publish(stateTopic, payload);
+}
+
+void mqttPublishPresetState(const char *payload)
+{
+  mqttClient.publish(presetStateTopic, payload);
+}
+
+void mqttPublishOscillationState(const char *payload)
+{
+  mqttClient.publish(oscillationStateTopic, payload);
+}
+
+void mqttPublishConfig(const char *payload)
+{
+  mqttClient.publish(configTopic, payload);
 }
 
 void mqttSubscribeForCommands()
@@ -53,4 +70,24 @@ void mqttSubscribeForCommands()
 void mqttLoop()
 {
   mqttClient.loop();
+}
+
+char *mqttGetStateTopic()
+{
+  return stateTopic;
+}
+
+char *mqttGetPresetStateTopic()
+{
+  return presetStateTopic;
+}
+
+char *mqttGetOscillationStateTopic()
+{
+  return oscillationStateTopic;
+}
+
+char *mqttGetCommandTopic()
+{
+  return commandTopic;
 }
