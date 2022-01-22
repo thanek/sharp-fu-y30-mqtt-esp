@@ -1,7 +1,7 @@
 ## ESP8266 MQTT Sharp-fu-y30 air purifier controller
 
 ### Disclaimer
-Note: if you decide to do those changes to your air purifier, you take all the responsibility for doing so with all it's consequences such as loosing warranty for your device or even destroing it! 
+Note: if you decide to do those changes to your air purifier, you take all the responsibility for doing so with all it's consequences such as loosing warranty for your device or even destroying it! 
 
 ### What you need
 * ESP8266 WiFi controller (for example Wemos D1 mini)
