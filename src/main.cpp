@@ -167,6 +167,29 @@ void setup()
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
+bool updateSharpState()
+{
+  bool shouldSendState = false;
+  int mode1 = digitalRead(MODE1);
+  int mode2 = digitalRead(MODE2);
+  int mode3 = digitalRead(MODE3);
+  int plasmaState = digitalRead(PLASMA_LED);
+
+  bool isOn = (mode1 || mode2 || mode3);
+  int mode = mode1 ? 1 : (mode2 ? 2 : (mode3 ? 3 : 0));
+  bool plasmaOn = plasmaState != 0;
+
+  if (sharpState.isOn != isOn || sharpState.mode != mode || sharpState.plasmaOn != plasmaOn)
+  {
+    sharpState.isOn = isOn;
+    sharpState.mode = mode;
+    sharpState.plasmaOn = plasmaOn;
+    shouldSendState = true;
+  }
+
+  return shouldSendState;
+}
+
 long lastStatusSentTime = 0;
 long lastConfigSentTime = 0;
 
@@ -174,6 +197,8 @@ void loop()
 {
   otaHandle();
   mqttLoop();
+
+  bool shouldSendState = updateSharpState();
 
   long now = millis();
 
@@ -202,16 +227,7 @@ void loop()
     mqttPublishConfig(jsonStr.c_str());
   }
 
-  int mode1 = digitalRead(MODE1);
-  int mode2 = digitalRead(MODE2);
-  int mode3 = digitalRead(MODE3);
-  int plasmaState = digitalRead(PLASMA_LED);
-
-  sharpState.isOn = (mode1 || mode2 || mode3);
-  sharpState.mode = mode1 ? 1 : (mode2 ? 2 : (mode3 ? 3 : 0));
-  sharpState.plasmaOn = plasmaState != 0;
-
-  if (!lastStatusSentTime || now - lastStatusSentTime > 3000)
+  if (shouldSendState || !lastStatusSentTime || now - lastStatusSentTime > 3000)
   {
     lastStatusSentTime = now;
 
