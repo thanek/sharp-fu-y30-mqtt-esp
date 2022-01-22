@@ -6,12 +6,13 @@ const char *hostname = "sharp-fu-y30eu-w";
 const char *commandTopic = "xis/esp8266/cmd";
 const char *statusTopic = "xis/esp8266/status";
 
-#define ON_OFF 15 // D8
-#define PLASMA 13 // D7
-#define MODE 12   // D6
-#define MODE1 0   // D3
-#define MODE3 4   // D2
-#define MODE2 5   // D1
+#define ON_OFF 15     // D8
+#define PLASMA 13     // D7
+#define MODE 12       // D6
+#define MODE1 0       // D3
+#define MODE3 4       // D2
+#define MODE2 5       // D1
+#define PLASMA_LED 16 // D0
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -87,6 +88,7 @@ void setup()
   pinMode(MODE1, INPUT);
   pinMode(MODE2, INPUT);
   pinMode(MODE3, INPUT);
+  pinMode(PLASMA_LED, INPUT);
 
   // Set software serial baud to 115200;
   Serial.begin(115200);
@@ -173,11 +175,13 @@ void loop()
     int mode1 = digitalRead(MODE1);
     int mode2 = digitalRead(MODE2);
     int mode3 = digitalRead(MODE3);
+    int plasmaState = digitalRead(PLASMA_LED);
 
     String mode = mode1 ? "low" : (mode2 ? "medium" : (mode3 ? "high" : "OFF"));
+    String plasma = plasmaState ? "ON" : "OFF";
 
     char strBuf[50];
-    sprintf(strBuf, "Current mode: %s", mode.c_str());
+    sprintf(strBuf, "Current mode: %s, Plasma: %s", mode.c_str(), plasma.c_str());
     client.publish(statusTopic, strBuf);
   }
 }
