@@ -41,5 +41,10 @@ You need to create the `config.h` file by copying the `config.example.h`. Enter 
 
 After you deploy your code to the ESP8266, you will be able to perform OTA updates. Just change the ESP8266 IP address in the `platformio.ini` file.
 
+## Demo
+See the demo of how you can control you purifier using `mosquito` command line client:
+
+[![Demo](https://img.youtube.com/vi/q9jJ4eS9DLY/0.jpg)](https://www.youtube.com/watch?v=q9jJ4eS9DLY)
+
 
 
