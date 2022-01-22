@@ -1,10 +1,8 @@
-#include <PubSubClient.h>
-#include <ArduinoOTA.h>
 #include "config.h"
+#include "mqtt.h"
+#include "ota.h"
 
-const char *hostname = "sharp-fu-y30eu-w";
-const char *commandTopic = "xis/esp8266/cmd";
-const char *statusTopic = "xis/esp8266/status";
+char hostname[128];
 
 #define ON_OFF 15     // D8
 #define PLASMA 13     // D7
@@ -14,8 +12,17 @@ const char *statusTopic = "xis/esp8266/status";
 #define MODE2 5       // D1
 #define PLASMA_LED 16 // D0
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+void createEntityID()
+{
+  byte MAC[6];
+  WiFi.macAddress(MAC);
+  char MACc[30];
+  sprintf(MACc, "%02X%02X%02X%02X%02X%02X", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
+  sprintf(hostname, "sharp-%s", strlwr(MACc));
+
+  Serial.print("Created hostname ");
+  Serial.println(hostname);
+}
 
 void pushButton(int button)
 {
@@ -26,16 +33,6 @@ void pushButton(int button)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.print("Message arrived in topic: ");
-  Serial.println(topic);
-  Serial.print("Message:");
-
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
   char *cmd = (char *)malloc(length + 1);
   memcpy(cmd, payload, length);
   cmd[length] = 0;
@@ -52,24 +49,24 @@ void callback(char *topic, byte *payload, unsigned int length)
   else if (command == "power")
   {
     pushButton(ON_OFF);
-    client.publish(statusTopic, "Power button pressed");
+    mqttPublish("Power button pressed");
   }
   else if (command == "plasma")
   {
     pushButton(PLASMA);
-    client.publish(statusTopic, "Plasma button pressed");
+    mqttPublish("Plasma button pressed");
   }
   else if (command == "mode")
   {
     pushButton(MODE);
-    client.publish(statusTopic, "Mode button pressed");
+    mqttPublish("Mode button pressed");
   }
   else
   {
     char strBuf[50];
     sprintf(strBuf, "UNKNOWN COMMAND %s", cmd);
     Serial.println(strBuf);
-    client.publish(statusTopic, strBuf);
+    mqttPublish(strBuf);
   }
 
   free(cmd);
@@ -77,6 +74,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 
 void setup()
 {
+  Serial.begin(115200);
+
   pinMode(LED_BUILTIN, OUTPUT);
 
   pinMode(ON_OFF, OUTPUT);
@@ -90,10 +89,8 @@ void setup()
   pinMode(MODE3, INPUT);
   pinMode(PLASMA_LED, INPUT);
 
-  // Set software serial baud to 115200;
-  Serial.begin(115200);
-  // connecting to a WiFi network
-  // Set Hostname.
+  createEntityID();
+
   WiFi.hostname(hostname);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -110,64 +107,21 @@ void setup()
   Serial.print("Local IP: ");
   Serial.println(WiFi.localIP());
 
-  ArduinoOTA.setHostname(hostname);
-  ArduinoOTA.onStart([]()
-                     { Serial.println("OTA Start"); });
-  ArduinoOTA.onEnd([]()
-                   { Serial.println("\nOTA End"); });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-                        { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); });
-  ArduinoOTA.onError([](ota_error_t error)
-                     {
-                       Serial.printf("Error[%u]: ", error);
-                       if (error == OTA_AUTH_ERROR)
-                         Serial.println("Auth Failed");
-                       else if (error == OTA_BEGIN_ERROR)
-                         Serial.println("Begin Failed");
-                       else if (error == OTA_CONNECT_ERROR)
-                         Serial.println("Connect Failed");
-                       else if (error == OTA_RECEIVE_ERROR)
-                         Serial.println("Receive Failed");
-                       else if (error == OTA_END_ERROR)
-                         Serial.println("End Failed");
-                     });
-  ArduinoOTA.begin();
+  otaSetup(hostname);
 
-  //connecting to a mqtt broker
-  client.setServer(MQTT_HOST, MQTT_PORT);
-  client.setCallback(callback);
-  while (!client.connected())
-  {
-    String client_id = "sharp-fu-y30-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), MQTT_USER, MQTT_PASSWORD))
-    {
-      Serial.println("Public emqx mqtt broker connected");
-    }
-    else
-    {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
-  }
+  mqttConnect(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, hostname, callback);
+  mqttSubscribeForCommands();
 
-  // publish and subscribe
-  client.publish(statusTopic, "hello from sharp-fu-y30");
-  String msg = "My mac address: ";
-  msg += String(WiFi.macAddress());
-  client.publish(statusTopic, msg.c_str());
-
-  client.subscribe(commandTopic);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 long lastStatusSentTime = 0;
 
 void loop()
 {
-  ArduinoOTA.handle();
-  client.loop();
+  otaHandle();
+  mqttLoop();
+
   long now = millis();
   if (now - lastStatusSentTime > 3000)
   {
@@ -182,6 +136,6 @@ void loop()
 
     char strBuf[50];
     sprintf(strBuf, "Current mode: %s, Plasma: %s", mode.c_str(), plasma.c_str());
-    client.publish(statusTopic, strBuf);
+    mqttPublish(strBuf);
   }
 }
