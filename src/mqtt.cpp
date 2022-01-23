@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include "mqtt.h"
+#include "debug.h"
+
+#define TOPIC_PREFIX "homeassistant/fan/"
 
 char commandTopic[256];
 char stateTopic[256];
@@ -12,12 +15,11 @@ PubSubClient mqttClient(espClient);
 
 void generateTopicNames(const char *clientId)
 {
-  const char *topicPrefix = "homeassistant/fan/";
-  sprintf(stateTopic, "%s%s/state", topicPrefix, clientId);
-  sprintf(presetStateTopic, "%s%s/preset", topicPrefix, clientId);
-  sprintf(oscillationStateTopic, "%s%s/oscillation", topicPrefix, clientId);
-  sprintf(commandTopic, "%s%s/command", topicPrefix, clientId);
-  sprintf(configTopic, "%s%s/config", topicPrefix, clientId);
+  sprintf(stateTopic, "%s%s/state", TOPIC_PREFIX, clientId);
+  sprintf(presetStateTopic, "%s%s/preset", TOPIC_PREFIX, clientId);
+  sprintf(oscillationStateTopic, "%s%s/oscillation", TOPIC_PREFIX, clientId);
+  sprintf(commandTopic, "%s%s/command", TOPIC_PREFIX, clientId);
+  sprintf(configTopic, "%s%s/config", TOPIC_PREFIX, clientId);
 }
 
 void mqttConnect(const char *host, int port, const char *user, const char *password, const char *clientId, MQTT_CALLBACK_SIGNATURE)
@@ -28,43 +30,32 @@ void mqttConnect(const char *host, int port, const char *user, const char *passw
   mqttClient.setCallback(callback);
   while (!mqttClient.connected())
   {
-    Serial.printf("The client %s connects to the MQTT broker\n", clientId);
+    DLOG("The client %s connects to the MQTT broker\n", clientId);
     if (mqttClient.connect(clientId, user, password))
     {
-      Serial.println("MQTT broker connected");
+      DLOG("MQTT broker connected\n");
     }
     else
     {
-      Serial.print("failed with state ");
-      Serial.print(mqttClient.state());
+      DLOG("failed with state %s\n", mqttClient.state());
       delay(2000);
     }
   }
+  mqttClient.subscribe(commandTopic);
 }
 
-void mqttPublishState(const char *payload)
+void mqttPublishState(const char *state, const char *modeName, const char *plasmaState)
 {
-  mqttClient.publish(stateTopic, payload);
-}
+  DLOG("Publishing state: %s, mode: %s, plasmaState: %s\n", state, modeName, plasmaState);
 
-void mqttPublishPresetState(const char *payload)
-{
-  mqttClient.publish(presetStateTopic, payload);
-}
-
-void mqttPublishOscillationState(const char *payload)
-{
-  mqttClient.publish(oscillationStateTopic, payload);
+  mqttClient.publish(stateTopic, state);
+  mqttClient.publish(presetStateTopic, modeName);
+  mqttClient.publish(oscillationStateTopic, plasmaState);
 }
 
 void mqttPublishConfig(const char *payload)
 {
   mqttClient.publish(configTopic, payload);
-}
-
-void mqttSubscribeForCommands()
-{
-  mqttClient.subscribe(commandTopic);
 }
 
 void mqttLoop()

@@ -8,9 +8,6 @@ char *mqttGetPresetStateTopic();
 char *mqttGetOscillationStateTopic();
 char *mqttGetCommandTopic();
 
-void mqttPublishState(const char* payload);
-void mqttPublishPresetState(const char* payload);
-void mqttPublishOscillationState(const char* payload);
+void mqttPublishState(const char* state, const char* modeName, const char* plasmaState);
 void mqttPublishConfig(const char* payload);
-void mqttSubscribeForCommands();
 void mqttLoop();
