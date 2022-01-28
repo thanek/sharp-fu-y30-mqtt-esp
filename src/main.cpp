@@ -1,8 +1,11 @@
 #include <ArduinoJson.h>
+#include <WiFiManager.h>
 #include "config.h"
 #include "debug.h"
 #include "mqtt.h"
 #include "ota.h"
+
+WiFiManager wifiManager;
 
 char hostname[128];
 
@@ -118,6 +121,11 @@ void performCommand(String command)
       pushButton(BTN_MODE);
     }
   }
+  else if (command == "version")
+  {
+    const char compile_date[] = __DATE__ " " __TIME__;
+    DLOG("Compiled on: %s\n", compile_date);
+  }
   else
   {
     DLOG("Unknown command: %s\n", command.c_str());
@@ -161,21 +169,15 @@ void setup()
   initDebug(hostname, debugCallback);
 
   WiFi.hostname(hostname);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  wifiManager.autoConnect();
 
-  DLOG("Connecting to WiFi..\n");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    DLOG(".");
-  }
-  DLOG("\nConnected to the WiFi network\n");
   DLOG("Local IP: %s\n", WiFi.localIP().toString().c_str());
 
   otaSetup(hostname);
 
-  mqttConnect(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, hostname, callback);
+  WiFiManagerParameter mqttHost("server", "MQTT host", MQTT_HOST, 40);
+  wifiManager.addParameter(&mqttHost);
+  mqttConnect(mqttHost.getValue(), MQTT_PORT, MQTT_USER, MQTT_PASSWORD, hostname, callback);
 
   digitalWrite(LED_BUILTIN, HIGH);
 }
@@ -205,10 +207,11 @@ bool updateSharpState()
 
 String generateHAConfig(const char *hostname)
 {
-  StaticJsonDocument<500> root;
+  StaticJsonDocument<600> root;
   root["name"] = hostname;
   root["unique_id"] = hostname;
   root["icon"] = "mdi:air-filter";
+  root["device"]["identifiers"][0] = hostname;
   root["device"]["manufacturer"] = "Sharp";
   root["device"]["model"] = "FU-Y30";
   root["state_topic"] = mqttGetStateTopic();

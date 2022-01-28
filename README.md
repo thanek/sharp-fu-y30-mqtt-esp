@@ -46,9 +46,9 @@ When you connect to the Q45, Q46 and Q47, you need to solder your wires to base 
 Be sure to properly connect the optocouplers with switch buttons on the control panels (note the polarity).
 
 ## Software
-You need to create the `config.h` file by copying the `config.example.h`. Enter your WiFi data there, also include the MQTT server address. You can use some of public MQTT servers with no problem.
+I recommend to use `platformio` to compile the project. After you deploy it to your ESP8266 device, the new Access Point should appear in your WiFi neighborhood (it's name should start with "ESP"). Just connect to this AP (no password required), and then go to http://192.168.4.1/ to configure the WiFi settings for your device. You will also be able to enter the MQTT server of your choice (you can use some of public MQTT servers with no problem).
 
-After you deploy your code to the ESP8266, you will be able to perform OTA updates. Just uncomment the `espota` upload protocol and change the ESP8266 IP address in the `platformio.ini` file.
+Once you deploy your code to the ESP8266 and configure it as your WiFi client, you will be able to perform OTA updates. Just uncomment the `espota` upload protocol and change the ESP8266 IP address in the `platformio.ini` file.
 
 ## Demo
 See the demo of how you can control you purifier using `mosquito` command line client:
